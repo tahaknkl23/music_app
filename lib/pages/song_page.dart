@@ -6,6 +6,13 @@ import 'package:provider/provider.dart';
 class SongPage extends StatelessWidget {
   const SongPage({super.key});
 
+  //convert duration into min:sec
+  String formatTime(Duration duration) {
+    String twoDigitSeconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    String formattedTime = "${duration.inMinutes}:$twoDigitSeconds";
+    return formattedTime;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<PlayListProvider>(builder: (context, value, child) {
@@ -83,26 +90,39 @@ class SongPage extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 25),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
+                        children: [
                           //start and end time //başlangıç ve bitiş zamanı
-                          Text("0:00"),
+                          Text(formatTime(value.currentDuration)),
                           //shuffle icon //karıştırma ikonu
-                          Icon(Icons.shuffle),
+                          const Icon(Icons.shuffle),
 
                           //repeat icon //tekrar ikonu
-                          Icon(Icons.repeat),
+                          const Icon(Icons.repeat),
 
                           //end time //bitiş zamanı
-                          Text("3:45"),
+                          Text(formatTime(value.totalDuration)),
                         ],
                       ),
                     ),
                     //song duration progress bar //şarkı süresi ilerleme çubuğu
                     SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0),
-                        ),
-                        child: Slider(min: 0, max: 100, value: 0, activeColor: Colors.green, onChanged: (value) {}))
+                      data: SliderTheme.of(context).copyWith(
+                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0),
+                      ),
+                      child: Slider(
+                        min: 0,
+                        max: value.totalDuration.inSeconds.toDouble(),
+                        value: value.currentDuration.inSeconds.toDouble(),
+                        activeColor: Colors.green,
+                        onChanged: (double double) {
+                          //during when the user is sliding araund//kullanıcı kaydırırken
+                        },
+                        onChangeEnd: (double double) {
+                          //sliding has finished  go to position in song duration //kaydırma bitti şarkı süresinde konuma git
+                          value.seek(Duration(seconds: double.toInt()));
+                        },
+                      ),
+                    )
                   ],
                 ),
                 const SizedBox(height: 25),
@@ -114,6 +134,7 @@ class SongPage extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: GestureDetector(
+                        onTap: value.playPreviousSong,
                         child: const NeuBox(
                           child: Icon(Icons.skip_previous),
                         ),
@@ -125,13 +146,24 @@ class SongPage extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: GestureDetector(
-                        child: const NeuBox(
-                          child: Icon(Icons.play_arrow),
+                        onTap: value.pauseOrResume,
+                        child: NeuBox(
+                          child: Icon(value.isPlaying ? Icons.pause : Icons.play_arrow),
                         ),
                       ),
                     ),
 
                     //skip forward //sonraki şarkıya atla
+                    const SizedBox(width: 25),
+                    Expanded(
+                      flex: 2,
+                      child: GestureDetector(
+                        onTap: value.playNextSong,
+                        child: const NeuBox(
+                          child: Icon(Icons.skip_next),
+                        ),
+                      ),
+                    ),
                   ],
                 )
               ],
